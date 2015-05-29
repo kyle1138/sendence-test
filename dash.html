@@ -1,0 +1,212 @@
+<html>
+<head>
+  <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+  <title>Dashboard</title>
+  <style>
+
+
+    * {
+    	margin: 0;
+    	padding: 0;
+    	border: 0;
+    	font-size: 100%;
+    	font: inherit;
+    	vertical-align: baseline;
+      font-family: sans-serif;
+    }
+
+
+    button{
+      margin-top: 15px;
+      padding: 5px;
+    }
+
+    #graph{
+      height: 100%;
+      margin: 200px 0 0 10px;
+    }
+    #dateDiv{
+      /*background-color: yellow;*/
+      display: block;
+      width:300px;
+      padding: 20px;
+      position:fixed;
+      top:0px;
+      /*height:100px;*/
+    }
+
+    #dateDisplay{
+      font-size: 32px;
+    }
+
+    #datePickDiv{
+      display: none;
+      background-color: white;
+    }
+
+    #timerContainer{
+      position:fixed;
+      text-align: right;
+      right:30;
+      top:-3;
+      /*width: 130;*/
+      background-color: 222;
+      color:white;
+      font-size: 20px;
+      padding: 12px;
+      font-family: sans-serif;
+      /*border: 3px solid #aaff21;*/
+      border-radius: 0px 0px 10px 10px;
+    }
+
+  </style>
+</head>
+<body>
+  <div id="dateDiv">
+    <span id="dateDisplay"> </span>
+    <br>
+    <div id="datePickDiv">
+
+      <input type="date" id="datePick"/>
+      <button type="button" id='setDate'>SET DATE  </button>
+
+    </div>
+
+  </div>
+<div id='timerContainer'>
+
+  <span>Server Uptime</span><br>
+  <span id='uptimeDisplay'>0:00:00</span>
+
+</div>
+
+<div id="graph">
+
+</div>
+
+
+
+<script>
+  var today = new Date;
+  var dd = today.getDate();
+  var mm = today.getMonth()+1;
+  var yyyy = today.getFullYear();
+
+  if(dd < 10){dd ='0' + dd};
+  if(mm < 10){mm ='0' + mm};
+
+  todayString = yyyy + '-' + mm + '-' + dd;
+  dateDisplayString = mm +'/'+ dd + '/' + yyyy;
+
+  console.log(today.toDateString());
+  var timerContainer = document.getElementById('timerContainer');
+  var datePick = document.getElementById('datePick');
+  var datePickDiv = document.getElementById('datePickDiv');
+  var dateDisplay = document.getElementById('dateDisplay');
+  var setDate = document.getElementById('setDate');
+  dateDisplay.innerText = dateDisplayString;
+  datePick.value = todayString;
+  var uptimeDisplay = document.getElementById('uptimeDisplay');
+  var ws = new WebSocket("ws://kyle.princesspeach.nyc:5000");
+
+
+  dateDisplay.addEventListener("click",function(){
+    datePickDiv.style.display = 'block';
+    // dateDisplay.style.display = 'none';
+  })
+
+  setDate.addEventListener('click', function(){
+    console.log(datePick.value);
+    newDate = datePick.valueAsDate;
+    var newdd = newDate.getDate() +1;
+    var newmm = newDate.getMonth()+1;
+    var newyyyy = newDate.getFullYear();
+    if(newdd < 10){newdd ='0' + newdd};
+    if(newmm < 10){newmm ='0' + newmm};
+    dateDisplay.innerText = newmm +'/'+ newdd + '/' + newyyyy;
+    datePickDiv.style.display = 'none';
+    // dateDisplay.style.display = 'block';
+  })
+
+  ws.addEventListener("open", function(evt) {
+  console.log('connected');
+
+  });
+
+  ws.addEventListener("message", function(evt) {
+
+
+  var totalSeconds = parseInt(evt.data);
+  var totalHours = Math.floor(totalSeconds/3600);
+  // var totalMinutes = Math.floor(totalSeconds/60);
+  var totalMinutes = Math.floor((totalSeconds % 3600)/60);
+  var seconds = totalSeconds % 60;
+
+    if(totalMinutes < 10){
+      totalMinutes = '0' + totalMinutes;
+    }
+    if(seconds  < 10){
+      seconds = '0' + seconds;
+    }
+  uptimeDisplay.innerText = totalHours + ':' + totalMinutes + ':' + seconds;
+
+  });
+
+  ws.addEventListener('close',function(evt){
+    uptimeDisplay.innerText = '0:00:00';
+    timerContainer.style.color = 'red';
+
+  })
+
+  var xRange = [1962,1963,1964,1965,1966,1967,1968,1969,1970,1971,1972,1973,1974,1975,1976,1977,1978,1979,
+    1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,
+    1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020];
+
+  var barData = [605.1,	638.6,	685.8,	743.7,	815,	861.7,	942.5,	1019.9,	1075.9
+  ,1167.8,	1282.4,	1428.5,	1548.8,	1688.9,	1877.6,	2086,	2356.6,	2632.1,	2862.5,	3211,	3345,	3638.1
+  ,	4040.7,	4346.7,	4590.2,	4870.2,	5252.6,	5657.7
+  ,	5979.6,	6174,	6539.3,	6878.7,	7308.8,	7664.1,	8100.2,	8608.5,	9089.2,	9660.6,	10284.8,	10621.8
+  ,	10977.5,	11510.7,	12274.9,	13093.7,	13855.9,	14477.6,	14718.6,	14418.7,	14964.4,	15079.6
+  ,	15601.5,	16202.7,	17011.4,	17936.1,	18934.2,	19980,	21024.8,  	21539.9,  22476.4];
+
+    var xPosition = 10;
+
+
+      var w = 1000;
+      var h = 500;
+      var barPadding = 4;
+      var gap = 5;
+
+
+      var svg = d3.select("#graph")
+            .append("svg")
+            .attr("width", w)
+            .attr("height", h);
+
+      svg.selectAll("rect")
+         .data(barData)
+         .enter()
+         .append("rect")
+         .attr("x", function(d, i) {
+            gap += 5;
+             return i * (w / barData.length);
+         })
+         .attr("y", function(d) {
+           console.log(h-(d/50));
+             return (h  - d/50);
+         })
+         .attr("width", w / barData.length - barPadding)
+         .attr("height", function(d) {
+           console.log(d);
+             return d;
+         })
+         .attr("fill", function(d) {
+          return "rgb(0, 0, 180)";
+         });
+
+
+
+</script>
+
+</body>
+</html>
